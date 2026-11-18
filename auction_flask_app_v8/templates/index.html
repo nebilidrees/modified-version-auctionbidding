@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Home - Auction and Bidding System</title>
+  </head>
+  <body>
+    <h1>Auction and Bidding System</h1>
+    <nav>
+      <a href="{{ url_for('index_page') }}">Home</a> |
+      <a href="{{ url_for('auctions_page') }}">Auctions</a> |
+      <a href="{{ url_for('sellers_page') }}">Sellers</a> |
+      <a href="{{ url_for('items_page') }}">Auction Items</a> |
+      <a href="{{ url_for('bidders_page') }}">Bidders</a> |
+      <a href="{{ url_for('bids_page') }}">Bids</a> |
+      <a href="{{ url_for('winners_page') }}">Winners &amp; Payments</a>
+    </nav>
+    <hr />
+
+    <h2>Welcome to the Auction and Bidding System</h2>
+    <p>
+      Follow the steps below to prepare an auction, collect bids, close it, and record payments. The pages share the same auction, seller, item, bidder, and bid records.
+    </p>
+
+    <h3>Program Workflow</h3>
+    <ol>
+      <li>
+        <strong>Prepare an auction:</strong> Schedule it on <a href="{{ url_for('auctions_page') }}">Auctions</a>, then <a href="{{ url_for('sellers_page') }}">register sellers</a> and list their items. You can also add a seller's item from <a href="{{ url_for('items_page') }}">Auction Items</a>.
+      </li>
+      <li>
+        <strong>Browse items:</strong> Review or search the <a href="{{ url_for('items_page') }}">item catalog</a> before bidding.
+      </li>
+      <li>
+        <strong>Register bidders:</strong> Use <a href="{{ url_for('bidders_page') }}">Bidders</a> to register a bidder and confirm payment of the UGX 30,000 participation fee.
+      </li>
+      <li>
+        <strong>Start and bid:</strong> Start the auction from <a href="{{ url_for('auctions_page') }}">Auctions</a>, then place or withdraw bids on the <a href="{{ url_for('bids_page') }}">Bids</a> page.
+      </li>
+      <li>
+        <strong>Review and close:</strong> Check the highest bids and history, then close the auction on <a href="{{ url_for('winners_page') }}">Winners &amp; Payments</a>. The system saves an item-by-item result.
+      </li>
+      <li>
+        <strong>Settle payments:</strong> Complete pending winning-bid payments on <a href="{{ url_for('winners_page') }}">Winners &amp; Payments</a>. The registration fee is separate and is not added to the winning bid a second time.
+      </li>
+    </ol>
+
+    <h3>Live System Metrics</h3>
+    <table border="1" cellpadding="6" cellspacing="0">
+      <thead>
+        <tr>
+          <th>Auctions</th>
+          <th>Registered Sellers</th>
+          <th>Listed Items</th>
+          <th>Registered Bidders</th>
+          <th>Total Bids Placed</th>
+          <th>Total Bid Volume</th>
+          <th>Current Highest Bid</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>{{ context.auction_count }}</td>
+          <td>{{ context.seller_count }}</td>
+          <td>{{ context.item_count }}</td>
+          <td>{{ context.bidder_count }}</td>
+          <td>{{ context.bid_count }}</td>
+          <td>UGX {{ "{:,}".format(context.total_bid_amount) }}</td>
+          <td>UGX {{ "{:,}".format(context.highest_bid) }} ({{ context.highest_bidder }})</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h3>System Directory</h3>
+    <p>Choose any module below to begin working:</p>
+    <table border="1" cellpadding="6" cellspacing="0">
+      <thead>
+        <tr>
+          <th>Module</th>
+          <th>Purpose &amp; Capabilities</th>
+          <th>Records</th>
+          <th>Open Page</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>Auctions</strong></td>
+          <td>Schedule an auction, start bidding, and review its status.</td>
+          <td>{{ context.auction_count }}</td>
+          <td><a href="{{ url_for('auctions_page') }}">Open Auctions</a></td>
+        </tr>
+        <tr>
+          <td><strong>Sellers</strong></td>
+          <td>Register a seller and list one or more items before bidding begins.</td>
+          <td>{{ context.seller_count }}</td>
+          <td><a href="{{ url_for('sellers_page') }}">Open Sellers</a></td>
+        </tr>
+        <tr>
+          <td><strong>Auction Items</strong></td>
+          <td>Search the catalog or add items for registered sellers.</td>
+          <td>{{ context.item_count }}</td>
+          <td><a href="{{ url_for('items_page') }}">Open Auction Items</a></td>
+        </tr>
+        <tr>
+          <td><strong>Bidders</strong></td>
+          <td>Register bidders after fee confirmation and review their bid history.</td>
+          <td>{{ context.bidder_count }}</td>
+          <td><a href="{{ url_for('bidders_page') }}">Open Bidders</a></td>
+        </tr>
+        <tr>
+          <td><strong>Bids</strong></td>
+          <td>Place or withdraw bids, check current leaders, and review bid history.</td>
+          <td>{{ context.bid_count }}</td>
+          <td><a href="{{ url_for('bids_page') }}">Open Bids</a></td>
+        </tr>
+        <tr>
+          <td><strong>Winners &amp; Payments</strong></td>
+          <td>Close auctions, view saved results, and complete pending winning-bid payments.</td>
+          <td>{{ context.winner_count }} Winners / {{ context.payment_count }} Payments</td>
+          <td><a href="{{ url_for('winners_page') }}">Open Winners &amp; Payments</a></td>
+        </tr>
+      </tbody>
+    </table>
+  </body>
+</html>

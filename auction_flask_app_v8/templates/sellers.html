@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Sellers - Auction and Bidding System</title>
+  </head>
+  <body>
+    <h1>Auction and Bidding System</h1>
+    <nav>
+      <a href="{{ url_for('index_page') }}">Home</a> |
+      <a href="{{ url_for('auctions_page') }}">Auctions</a> |
+      <a href="{{ url_for('sellers_page') }}">Sellers</a> |
+      <a href="{{ url_for('items_page') }}">Auction Items</a> |
+      <a href="{{ url_for('bidders_page') }}">Bidders</a> |
+      <a href="{{ url_for('bids_page') }}">Bids</a> |
+      <a href="{{ url_for('winners_page') }}">Winners &amp; Payments</a>
+    </nav>
+    <hr />
+
+    <h2>Seller Registration</h2>
+    <p>
+      Register a seller and at least one auction item before bidders can bid. Seller status is set to <strong>Registered</strong> when the form is submitted.
+    </p>
+    {% if status_message %}
+    <p><strong>{{ status_message }}</strong></p>
+    {% endif %}
+
+    <form method="GET" action="{{ url_for('sellers_page') }}">
+      <fieldset>
+        <legend>Step 1: Choose How Many Items to Register</legend>
+        <p>
+          <label>How many items does this seller want to register?</label><br />
+          <select name="item_slots">
+            {% for n in range(1, 11) %}
+            <option value="{{ n }}" {% if n == item_slots %}selected{% endif %}>
+              {{ n }} {{ 'Item' if n == 1 else 'Items' }}
+            </option>
+            {% endfor %}
+          </select>
+          <button type="submit">Set Number of Items</button>
+        </p>
+      </fieldset>
+    </form>
+
+    <form method="POST" action="{{ url_for('add_seller') }}">
+      <fieldset>
+        <legend>Step 2: Seller Profile Information</legend>
+        <p>
+          <label>Seller Full Name:</label><br />
+          <input type="text" name="name" required />
+        </p>
+        <p>
+          <label>Company / Organization:</label><br />
+          <input type="text" name="company" required />
+        </p>
+        <p>
+          <label>Contact Phone:</label><br />
+          <input type="text" name="contact" required />
+        </p>
+        <p>
+          <label>Email Address:</label><br />
+          <input type="email" name="email_address" required />
+        </p>
+        <p>
+          <label>Target Auction:</label><br />
+          <select name="auction_id" required>
+            {% for auc in auctions %}
+            <option value="{{ auc.auction_id }}">{{ auc.auction_id }} - {{ auc.auction_name }} ({{ auc.date }})</option>
+            {% else %}
+            <option value="" disabled selected>No open or scheduled auctions</option>
+            {% endfor %}
+          </select>
+        </p>
+        <p>
+          <label>Seller Status:</label><br />
+          <input type="text" value="Registered after submission" readonly disabled />
+        </p>
+      </fieldset>
+
+      {% if item_slots > 0 %}
+      <h3>Step 3: Item Details ({{ item_slots }} {{ 'Item' if item_slots == 1 else 'Items' }})</h3>
+      {% for idx in range(1, item_slots + 1) %}
+      <fieldset>
+        <legend>Item #{{ idx }} Specifications</legend>
+        <p>
+          <label>Item Name:</label><br />
+          <input type="text" name="item_name[]" placeholder="e.g. Samsung Galaxy S24 Ultra / Toyota Hilux" required />
+        </p>
+        <p>
+          <label>Category:</label><br />
+          <select name="category[]" required>
+            {% for cat in categories %}
+            <option value="{{ cat }}">{{ cat }}</option>
+            {% endfor %}
+          </select>
+        </p>
+        <p>
+          <label>Condition:</label><br />
+          <select name="condition[]" required>
+            <option value="New">New</option>
+            <option value="Used">Used</option>
+          </select>
+        </p>
+        <p>
+          <label>Base / Starting Price (UGX):</label><br />
+          <input type="number" name="starting_price[]" min="1" placeholder="e.g. 2500000" required />
+        </p>
+        <p>
+          <label>Reserved Price (UGX):</label><br />
+          <input type="number" name="reserved_price[]" min="1" placeholder="Must be at least the starting price" required />
+        </p>
+        <p>
+          <label>Item Description:</label><br />
+          <input type="text" name="description[]" placeholder="Key specifications, serial/model details, or condition notes" />
+        </p>
+      </fieldset>
+      {% endfor %}
+      {% endif %}
+
+      <p>
+        <button type="submit">
+          Register Seller &amp; Save {{ item_slots }} {{ 'Item' if item_slots == 1 else 'Items' }}
+        </button>
+      </p>
+    </form>
+
+    <h2>Registered Sellers</h2>
+    <table border="1" cellpadding="6" cellspacing="0">
+      <thead>
+        <tr>
+          <th>Seller ID</th>
+          <th>Name</th>
+          <th>Company</th>
+          <th>Contact</th>
+          <th>Email Address</th>
+          <th>Auction ID</th>
+          <th>Registered Items</th>
+          <th>Seller Status</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for s in sellers %}
+        <tr>
+          <td>{{ s.seller_id }}</td>
+          <td>{{ s.name }}</td>
+          <td>{{ s.company }}</td>
+          <td>{{ s.contact }}</td>
+          <td>{{ s.email_address }}</td>
+          <td>{{ s.auction_id }}</td>
+          <td>
+            {% for item_name in s.listed_items %}
+            {{ item_name }}{% if not loop.last %}, {% endif %}
+            {% else %}
+            No items listed
+            {% endfor %}
+          </td>
+          <td><strong>{{ s.seller_status }}</strong></td>
+          <td>
+            <form method="POST" action="{{ url_for('toggle_seller_status', seller_id=s.seller_id) }}">
+              <button type="submit">
+                {{ 'Set Not Registered' if s.seller_status == 'Registered' else 'Set Registered' }}
+              </button>
+            </form>
+          </td>
+        </tr>
+        {% else %}
+        <tr><td colspan="9">No sellers have registered yet.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </body>
+</html>

@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Bidders - Auction and Bidding System</title>
+  </head>
+  <body>
+    <h1>Auction and Bidding System</h1>
+    <nav>
+      <a href="{{ url_for('index_page') }}">Home</a> |
+      <a href="{{ url_for('auctions_page') }}">Auctions</a> |
+      <a href="{{ url_for('sellers_page') }}">Sellers</a> |
+      <a href="{{ url_for('items_page') }}">Auction Items</a> |
+      <a href="{{ url_for('bidders_page') }}">Bidders</a> |
+      <a href="{{ url_for('bids_page') }}">Bids</a> |
+      <a href="{{ url_for('winners_page') }}">Winners &amp; Payments</a>
+    </nav>
+    <hr />
+
+    <h2>1. Register a Bidder</h2>
+    <p>Bidder registration requires confirmation that the UGX 30,000 participation fee has been paid. Only registered bidders can place bids. Enter birth dates as DD-MM-YYYY; older saved records may contain only a birth year.</p>
+    {% if error_msg %}
+    <p><strong>Notice:</strong> {{ error_msg }}</p>
+    {% endif %}
+
+    <form method="POST" action="{{ url_for('add_bidder') }}">
+      <fieldset>
+        <legend>Bidder Details and Fee Confirmation</legend>
+        <p>
+          <label>Full Name:</label><br />
+          <input type="text" name="name" required />
+        </p>
+        <p>
+          <label>Contact Phone:</label><br />
+          <input type="text" name="contact" required />
+        </p>
+        <p>
+          <label>Residential / Business Address:</label><br />
+          <input type="text" name="address" required />
+        </p>
+        <p>
+          <label>Gender:</label><br />
+          <select name="gender" required>
+            <option value="M">Male (M)</option>
+            <option value="F">Female (F)</option>
+          </select>
+        </p>
+        <p>
+          <label>Birth Date:</label><br />
+          <input type="text" name="birth_date" placeholder="DD-MM-YYYY" pattern="[0-9]{2}-[0-9]{2}-[0-9]{4}" required />
+        </p>
+        <p>
+          <label>Auction:</label><br />
+          <select name="auction_id" required>
+            {% for auc in auctions %}
+            <option value="{{ auc.auction_id }}">{{ auc.auction_id }} - {{ auc.auction_name }} ({{ auc.location }})</option>
+            {% else %}
+            <option value="" disabled selected>No auctions scheduled yet</option>
+            {% endfor %}
+          </select>
+        </p>
+        <p>
+          <label>
+            <input type="checkbox" name="participation_fee_paid" value="yes" required />
+            <strong>Participation fee paid (UGX 30,000)</strong>
+          </label>
+        </p>
+        <button type="submit">Register Bidder</button>
+      </fieldset>
+    </form>
+
+    <h2>2. View Registered Bidders</h2>
+    <table border="1" cellpadding="6" cellspacing="0">
+      <thead>
+        <tr>
+          <th>Bidder ID</th>
+          <th>Name</th>
+          <th>Contact</th>
+          <th>Address</th>
+          <th>Gender</th>
+          <th>Birth Date / Legacy Year</th>
+          <th>Auction</th>
+          <th>Participation Fee</th>
+          <th>Status</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for reg in bidders %}
+        <tr>
+          <td>{{ reg.bidders_id }}</td>
+          <td>{{ reg.name }}</td>
+          <td>{{ reg.contact }}</td>
+          <td>{{ reg.address }}</td>
+          <td>{{ reg.gender }}</td>
+          <td>{{ reg.birth_year }}</td>
+          <td>{{ reg.auction_id }}</td>
+          <td>UGX {{ "{:,}".format(reg.participation_fee_paid or 0) }}</td>
+          <td><strong>{{ reg.status }}</strong></td>
+        </tr>
+        {% else %}
+        <tr><td colspan="9">No bidders registered yet.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+
+    <h2>3. Search a Bidder and Review Their Bidding History</h2>
+    <form method="GET" action="{{ url_for('bidders_page') }}">
+      <label for="bidder-id">Select Bidder:</label><br />
+      <select id="bidder-id" name="bidder_id" required>
+        {% for reg in bidders %}
+        <option value="{{ reg.bidders_id }}" {% if selected_bidder and selected_bidder.bidders_id == reg.bidders_id %}selected{% endif %}>
+          {{ reg.bidders_id }} - {{ reg.name }}
+        </option>
+        {% else %}
+        <option value="" disabled selected>No registered bidders</option>
+        {% endfor %}
+      </select>
+      <button type="submit">View Bidder History</button>
+    </form>
+
+    {% if selected_bidder %}
+    <h3>{{ selected_bidder.name }} ({{ selected_bidder.bidders_id }})</h3>
+    <p>
+      Contact: {{ selected_bidder.contact }} |
+      Address: {{ selected_bidder.address }} |
+      Gender: {{ selected_bidder.gender }} |
+      Birth date / year: {{ selected_bidder.birth_year }}
+    </p>
+    <table border="1" cellpadding="6" cellspacing="0">
+      <thead>
+        <tr><th>Item</th><th>Bid Amount (UGX)</th><th>Date</th><th>Time</th><th>Bid Status</th><th>Payment Status</th></tr>
+      </thead>
+      <tbody>
+        {% for bid in bidder_history %}
+        <tr>
+          <td>{{ bid.item_id }} - {{ bid.item_name }}</td>
+          <td>{{ "{:,}".format(bid.amount) }}</td>
+          <td>{{ bid.date }}</td>
+          <td>{{ bid.time }}</td>
+          <td>{{ bid.bid_status or 'Active' }}</td>
+          <td>{{ bid.payment_status or 'Not applicable' }}</td>
+        </tr>
+        {% else %}
+        <tr><td colspan="6">This bidder has not placed any bids yet.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% endif %}
+
+    <h2>4. Browse Items and Continue to Bidding</h2>
+    <p>Find items on the Auction Items page. The auction must be started before an item can receive bids.</p>
+    <p><a href="{{ url_for('items_page') }}">Browse or search items</a> | <a href="{{ url_for('auctions_page') }}">Check auction status</a> | <a href="{{ url_for('bids_page') }}">Place a bid</a></p>
+
+    <h3>Items Currently Open for Bidding</h3>
+    <table border="1" cellpadding="6" cellspacing="0">
+      <thead>
+        <tr>
+          <th>Item ID</th>
+          <th>Item Name</th>
+          <th>Category</th>
+          <th>Condition</th>
+          <th>Description</th>
+          <th>Starting Price (UGX)</th>
+          <th>Current Highest Bid (UGX)</th>
+          <th>Auction</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for item in available_items %}
+        <tr>
+          <td>{{ item.item_id }}</td>
+          <td><strong>{{ item.item_name }}</strong></td>
+          <td>{{ item.category }}</td>
+          <td>{{ item.condition }}</td>
+          <td>{{ item.description or '-' }}</td>
+          <td>{{ "{:,}".format(item.starting_price) }}</td>
+          <td>
+            {% set top = highest_by_item.get(item.item_id, 0) %}
+            {{ "{:,}".format(top) if top > 0 else 'No bids yet' }}
+          </td>
+          <td>{{ item.auction_id }}</td>
+        </tr>
+        {% else %}
+        <tr><td colspan="8">No items are currently available in open auctions.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </body>
+</html>

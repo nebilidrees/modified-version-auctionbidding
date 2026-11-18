@@ -1,0 +1,333 @@
+{
+    "auctions": [
+        {
+            "auction_id": "AUC001",
+            "date": "21-10-2026",
+            "start_time": "10:00 AM",
+            "end_time": "4:00 PM",
+            "location": "Kampala",
+            "auction_name": "Car Auction",
+            "status": "Closed"
+        },
+        {
+            "auction_id": "AUC002",
+            "date": "10-12-2026",
+            "start_time": "8:00am",
+            "end_time": "4:00pm",
+            "location": "kampala",
+            "auction_name": "kla gadget",
+            "status": "Open"
+        }
+    ],
+    "sellers": [
+        {
+            "seller_id": "SEL-0001",
+            "name": "John",
+            "company": "John Motors",
+            "contact": "0700000000",
+            "email_address": "john@email.com",
+            "seller_status": "Registered",
+            "auction_id": "AUC001"
+        },
+        {
+            "seller_id": "SEL-0002",
+            "name": "kajubi",
+            "company": "kajubi enterprise",
+            "contact": "068898",
+            "email_address": "ryuydgtry@gmail.com",
+            "seller_status": "Not Registered",
+            "auction_id": "AUC001"
+        },
+        {
+            "seller_id": "SEL-0003",
+            "name": "idrislll",
+            "company": "kla",
+            "contact": "0778767",
+            "email_address": "nebil@gmail.com",
+            "seller_status": "Not Registered",
+            "auction_id": "AUC002"
+        }
+    ],
+    "items": [
+        {
+            "item_id": "ITM001",
+            "item_name": "Toyota Premio",
+            "category": "Automobiles & Commercial Vehicles",
+            "condition": "Used",
+            "starting_price": 5000000,
+            "reserved_price": 6000000,
+            "description": "Clean 2015 model, low mileage",
+            "status": "Sold",
+            "seller_id": "SEL-0001",
+            "seller_name": "John",
+            "auction_id": "AUC001"
+        },
+        {
+            "item_id": "ITM002",
+            "item_name": "s24 ultra samsung",
+            "category": "Automobiles & Commercial Vehicles",
+            "condition": "New",
+            "starting_price": 300000,
+            "reserved_price": 500000,
+            "description": "very nice looking",
+            "status": "Available",
+            "seller_id": "SEL-0002",
+            "seller_name": "kajubi",
+            "auction_id": "AUC001"
+        },
+        {
+            "item_id": "ITM-0001",
+            "item_name": "Laptop",
+            "category": "General",
+            "condition": "New",
+            "starting_price": 500000,
+            "reserved_price": 550000,
+            "description": "",
+            "status": "Available",
+            "seller_id": "SEL-0001",
+            "seller_name": "Nabirye Sarah",
+            "auction_id": ""
+        },
+        {
+            "item_id": "ITM-0002",
+            "item_name": "Watch",
+            "category": "General",
+            "condition": "Used",
+            "starting_price": 150000,
+            "reserved_price": 200000,
+            "description": "",
+            "status": "Available",
+            "seller_id": "SEL-0002",
+            "seller_name": "Ssemanda John",
+            "auction_id": ""
+        },
+        {
+            "item_id": "ITM-0003",
+            "item_name": "Phone",
+            "category": "General",
+            "condition": "New",
+            "starting_price": 800000,
+            "reserved_price": 850000,
+            "description": "",
+            "status": "Sold",
+            "seller_id": "SEL-0003",
+            "seller_name": "Akello Grace",
+            "auction_id": ""
+        },
+        {
+            "item_id": "ITM-0004",
+            "item_name": "Tablet",
+            "category": "General",
+            "condition": "Used",
+            "starting_price": 450000,
+            "reserved_price": 500000,
+            "description": "",
+            "status": "Available",
+            "seller_id": "SEL-0001",
+            "seller_name": "Nabirye Sarah",
+            "auction_id": ""
+        },
+        {
+            "item_id": "ITM-0005",
+            "item_name": "Camera",
+            "category": "General",
+            "condition": "New",
+            "starting_price": 1200000,
+            "reserved_price": 1250000,
+            "description": "",
+            "status": "Available",
+            "seller_id": "SEL-0004",
+            "seller_name": "Mugisha Peter",
+            "auction_id": ""
+        },
+        {
+            "item_id": "ITM-0006",
+            "item_name": "Headphones",
+            "category": "General",
+            "condition": "New",
+            "starting_price": 250000,
+            "reserved_price": 300000,
+            "description": "",
+            "status": "Available",
+            "seller_id": "SEL-0002",
+            "seller_name": "Ssemanda John",
+            "auction_id": ""
+        },
+        {
+            "item_id": "ITM-0007",
+            "item_name": "Playstation",
+            "category": "General",
+            "condition": "Used",
+            "starting_price": 900000,
+            "reserved_price": 950000,
+            "description": "",
+            "status": "Available",
+            "seller_id": "SEL-0003",
+            "seller_name": "Akello Grace",
+            "auction_id": ""
+        },
+        {
+            "item_id": "ITM-0008",
+            "item_name": "Smartwatch",
+            "category": "General",
+            "condition": "New",
+            "starting_price": 300000,
+            "reserved_price": 350000,
+            "description": "",
+            "status": "Available",
+            "seller_id": "SEL-0004",
+            "seller_name": "Mugisha Peter",
+            "auction_id": ""
+        },
+        {
+            "item_id": "ITM-0009",
+            "item_name": "Phone",
+            "category": "Gadget",
+            "condition": "New",
+            "starting_price": 670000,
+            "reserved_price": 720000,
+            "description": "",
+            "status": "Available",
+            "seller_id": "SEL-0001",
+            "seller_name": "lutaaya nabil",
+            "auction_id": ""
+        },
+        {
+            "item_id": "ITM-0010",
+            "item_name": "Ipod",
+            "category": "Smartphone",
+            "condition": "Used",
+            "starting_price": 450000,
+            "reserved_price": 500000,
+            "description": "",
+            "status": "Available",
+            "seller_id": "SEL-0002",
+            "seller_name": "idris idris",
+            "auction_id": ""
+        },
+        {
+            "item_id": "ITM003",
+            "item_name": "mac book",
+            "category": "Automobiles & Commercial Vehicles",
+            "condition": "Used",
+            "starting_price": 300000,
+            "reserved_price": 4500000,
+            "description": "refurbished",
+            "status": "Available",
+            "seller_id": "SEL-0003",
+            "seller_name": "idrislll",
+            "auction_id": "AUC002"
+        },
+        {
+            "item_id": "ITM004",
+            "item_name": "pixel",
+            "category": "Automobiles & Commercial Vehicles",
+            "condition": "New",
+            "starting_price": 490000,
+            "reserved_price": 5677889,
+            "description": "nice",
+            "status": "Available",
+            "seller_id": "SEL-0003",
+            "seller_name": "idrislll",
+            "auction_id": "AUC002"
+        }
+    ],
+    "bidders": [
+        {
+            "bidders_id": "B001",
+            "name": "John",
+            "contact": "0700000000",
+            "address": "Kampala",
+            "gender": "M",
+            "birth_year": 1995,
+            "auction_id": "AUC001",
+            "participation_fee_paid": 30000,
+            "status": "Registered (Fee Paid)"
+        }
+    ],
+    "bids": [
+        {
+            "amount": 6500000,
+            "item_id": "ITM001",
+            "item_name": "Toyota Premio",
+            "category": "Automobiles & Commercial Vehicles",
+            "condition": "Used",
+            "starting_price": 5000000,
+            "reserved_price": 6000000,
+            "meets_reserve": true,
+            "status": "Available",
+            "seller_id": "SEL-0001",
+            "auction_id": "AUC001",
+            "bidders_id": "B001",
+            "bidder_name": "John",
+            "contact": "0700000000",
+            "address": "Kampala",
+            "gender": "M",
+            "birth_year": 1995,
+            "date": "21-10-2026",
+            "time": "10:30:00 AM",
+            "bid_status": "Winning bid",
+            "payment_status": "Completed"
+        }
+    ],
+    "winners": [
+        {
+            "winner_id": "WIN001",
+            "auction_id": "AUC001",
+            "auction_name": "Car Auction",
+            "bidders_id": "B001",
+            "name": "John",
+            "contact": "0700000000",
+            "item_id": "ITM001",
+            "item_name": "Toyota Premio",
+            "final_bid": 6500000,
+            "added_fee": 0,
+            "total_amount_payable": 6500000,
+            "eligible_for_item_payment": true,
+            "payment_status": "Completed"
+        }
+    ],
+    "payments": [
+        {
+            "payment_id": "PAY001",
+            "winner_id": "WIN001",
+            "winner_name": "John",
+            "item_name": "Toyota Premio",
+            "winning_bid": 6500000,
+            "added_fee": 0,
+            "amount": 6500000,
+            "transaction_id": "TXN-251710",
+            "currency": "UGX",
+            "payment_method": "Mobile Money"
+        }
+    ],
+    "auction_results": [
+        {
+            "auction_id": "AUC001",
+            "auction_name": "Car Auction",
+            "date": "21-10-2026",
+            "location": "Kampala",
+            "items": [
+                {
+                    "item_id": "ITM001",
+                    "item_name": "Toyota Premio",
+                    "starting_price": 5000000,
+                    "valid_bid_count": 1,
+                    "sale_status": "Sold",
+                    "winner_id": "B001",
+                    "winner_name": "John",
+                    "final_bid": 6500000,
+                    "payment_status": "Completed"
+                },
+                {
+                    "item_id": "ITM002",
+                    "item_name": "s24 ultra samsung",
+                    "starting_price": 300000,
+                    "valid_bid_count": 0,
+                    "sale_status": "Unsold",
+                    "payment_status": "Not applicable"
+                }
+            ]
+        }
+    ]
+}

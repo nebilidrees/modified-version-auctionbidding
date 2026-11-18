@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Winners &amp; Payments - Auction and Bidding System</title>
+  </head>
+  <body>
+    <h1>Auction and Bidding System</h1>
+    <nav>
+      <a href="{{ url_for('index_page') }}">Home</a> |
+      <a href="{{ url_for('auctions_page') }}">Auctions</a> |
+      <a href="{{ url_for('sellers_page') }}">Sellers</a> |
+      <a href="{{ url_for('items_page') }}">Auction Items</a> |
+      <a href="{{ url_for('bidders_page') }}">Bidders</a> |
+      <a href="{{ url_for('bids_page') }}">Bids</a> |
+      <a href="{{ url_for('winners_page') }}">Winners &amp; Payments</a>
+    </nav>
+    <hr />
+
+    <h2>1. Review Current Auction Standings</h2>
+    <p>Each item's highest active bid becomes its winner when the auction is closed. The UGX 30,000 participation fee is paid during bidder registration; it is not added again to the winning bid.</p>
+    {% if status_message %}
+    <p><strong>{{ status_message }}</strong></p>
+    {% endif %}
+    <table border="1" cellpadding="6" cellspacing="0">
+      <thead>
+        <tr>
+          <th>Auction</th>
+          <th>Auction Status</th>
+          <th>Item</th>
+          <th>Active Bids</th>
+          <th>Current Highest Bidder</th>
+          <th>Highest Bid (UGX)</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in standings %}
+        <tr>
+          <td>{{ row.auction_id }} - {{ row.auction_name }}</td>
+          <td>{{ row.auction_status }}</td>
+          <td>{{ row.item_id }} - {{ row.item_name }}</td>
+          <td>{{ row.bid_count }}</td>
+          <td>{{ row.leader_name }}</td>
+          <td>{{ "{:,}".format(row.leader_amount) }}</td>
+        </tr>
+        {% else %}
+        <tr><td colspan="6">No auction items are available yet.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+
+    <h2>2. Close an Open Auction</h2>
+    <p>Closing records each item's valid bid count, winner, final bid, and payment status. Items without bids are recorded as unsold.</p>
+    <table border="1" cellpadding="6" cellspacing="0">
+      <thead><tr><th>Auction</th><th>Status</th><th>Action</th></tr></thead>
+      <tbody>
+        {% for auction in auctions %}
+        <tr>
+          <td>{{ auction.auction_id }} - {{ auction.auction_name }}</td>
+          <td>{{ auction.status or 'Open' }}</td>
+          <td>
+            {% if (auction.status or 'Open') == 'Open' %}
+            <form method="POST" action="{{ url_for('close_auction', auction_id=auction.auction_id) }}">
+              <button type="submit">Close Auction and Save Results</button>
+            </form>
+            {% else %}
+            -
+            {% endif %}
+          </td>
+        </tr>
+        {% else %}
+        <tr><td colspan="3">No auctions have been scheduled.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+
+    <h2>3. Auction Results</h2>
+    {% for result in results %}
+    <h3>{{ result.auction_id }} - {{ result.auction_name }} ({{ result.date }}, {{ result.location }})</h3>
+    <table border="1" cellpadding="6" cellspacing="0">
+      <thead>
+        <tr>
+          <th>Item ID</th>
+          <th>Item Name</th>
+          <th>Starting Price (UGX)</th>
+          <th>Valid Bids</th>
+          <th>Sale Status</th>
+          <th>Winner</th>
+          <th>Final Bid (UGX)</th>
+          <th>Payment Status</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for item in result["items"] %}
+        <tr>
+          <td>{{ item.item_id }}</td>
+          <td>{{ item.item_name }}</td>
+          <td>{{ "{:,}".format(item.starting_price) }}</td>
+          <td>{{ item.valid_bid_count }}</td>
+          <td>{{ item.sale_status }}</td>
+          <td>{% if item.winner_name %}{{ item.winner_name }} ({{ item.winner_id }}){% else %}-{% endif %}</td>
+          <td>{% if item.final_bid is defined %}{{ "{:,}".format(item.final_bid) }}{% else %}-{% endif %}</td>
+          <td>{{ item.payment_status }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <p>No closed auction results have been saved yet.</p>
+    {% endfor %}
+
+    <h2>4. Complete a Pending Winning-Bid Payment</h2>
+    <p>Choose an announced winner with a pending payment. The payment amount is the winning bid only; the participation fee was collected during registration.</p>
+    {% if pending_winners %}
+    <form method="POST" action="{{ url_for('add_payment') }}">
+      <fieldset>
+        <legend>Pending Payment</legend>
+        <p>
+          <label>Select Bidder and Item:</label><br />
+          <select name="winner_id" required>
+            {% for winner in pending_winners %}
+            <option value="{{ winner.winner_id }}">
+              {{ winner.bidders_id }} - {{ winner.name }} | {{ winner.item_id }} - {{ winner.item_name }} | UGX {{ "{:,}".format(winner.final_bid) }}
+            </option>
+            {% endfor %}
+          </select>
+        </p>
+        <p>
+          <label>Currency:</label><br />
+          <select name="currency" required>
+            <option value="UGX">UGX</option>
+            <option value="KSH">KSH</option>
+            <option value="EURO">EURO</option>
+          </select>
+        </p>
+        <p>
+          <label>Payment Method:</label><br />
+          <select name="payment_method" required>
+            <option value="Mobile Money">Mobile Money</option>
+            <option value="Credit Card">Credit Card</option>
+          </select>
+        </p>
+        <button type="submit">Complete Payment</button>
+      </fieldset>
+    </form>
+    {% else %}
+    <p>There are no pending winner payments.</p>
+    {% endif %}
+
+    <h2>5. Payment History</h2>
+    <table border="1" cellpadding="6" cellspacing="0">
+      <thead>
+        <tr>
+          <th>Payment ID</th>
+          <th>Transaction ID</th>
+          <th>Winner</th>
+          <th>Item</th>
+          <th>Winning Bid Paid</th>
+          <th>Currency</th>
+          <th>Payment Method</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for payment in payments %}
+        <tr>
+          <td>{{ payment.payment_id }}</td>
+          <td>{{ payment.transaction_id }}</td>
+          <td>{{ payment.winner_id }} - {{ payment.winner_name }}</td>
+          <td>{{ payment.item_name }}</td>
+          <td>{{ "{:,}".format(payment.amount) }}</td>
+          <td>{{ payment.currency }}</td>
+          <td>{{ payment.payment_method }}</td>
+        </tr>
+        {% else %}
+        <tr><td colspan="7">No item payments have been recorded.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </body>
+</html>

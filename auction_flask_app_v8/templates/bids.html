@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Bids - Auction and Bidding System</title>
+  </head>
+  <body>
+    <h1>Auction and Bidding System</h1>
+    <nav>
+      <a href="{{ url_for('index_page') }}">Home</a> |
+      <a href="{{ url_for('auctions_page') }}">Auctions</a> |
+      <a href="{{ url_for('sellers_page') }}">Sellers</a> |
+      <a href="{{ url_for('items_page') }}">Auction Items</a> |
+      <a href="{{ url_for('bidders_page') }}">Bidders</a> |
+      <a href="{{ url_for('bids_page') }}">Bids</a> |
+      <a href="{{ url_for('winners_page') }}">Winners &amp; Payments</a>
+    </nav>
+    <hr />
+
+    <h2>1. Place or Withdraw a Bid</h2>
+    <p>Start the auction first. Bids are accepted only for available items in open auctions and registered bidders who have paid the participation fee.</p>
+    {% if status_message %}
+    <p><strong>{{ status_message }}</strong></p>
+    {% endif %}
+
+    {% if context["items"] and context["bidders"] %}
+    <form method="POST" action="{{ url_for('add_bid') }}">
+      <input type="hidden" name="redirect_to" value="bids_page" />
+      <fieldset>
+        <legend>Submit a Bid</legend>
+        <p>
+          <label>Select Registered Bidder:</label><br />
+          <select name="registered_bidder_id" required>
+            {% for bidder in context.bidders %}
+            <option value="{{ bidder.bidders_id }}">{{ bidder.bidders_id }} - {{ bidder.name }} ({{ bidder.contact }})</option>
+            {% endfor %}
+          </select>
+        </p>
+        <p>
+          <label>Select Available Item:</label><br />
+          <select name="registered_item_id" required>
+            {% for item in context["items"] %}
+            <option value="{{ item.item_id }}">
+              {{ item.item_id }} - {{ item.item_name }} [{{ item.category }} | {{ item.condition }}] — Starting price: UGX {{ "{:,}".format(item.starting_price) }}
+            </option>
+            {% endfor %}
+          </select>
+        </p>
+        <p>
+          <label>Bid Amount (UGX):</label><br />
+          <input type="number" name="amount" min="1" step="1" placeholder="Must be at least the item's starting price" required />
+        </p>
+        <button type="submit">Submit Bid</button>
+      </fieldset>
+    </form>
+    {% else %}
+    <p>To bid, first register a bidder and pay the participation fee, add auction items, and start an auction.</p>
+    <p><a href="{{ url_for('bidders_page') }}">Register or find a bidder</a> | <a href="{{ url_for('items_page') }}">Browse or add items</a> | <a href="{{ url_for('auctions_page') }}">Start an auction</a></p>
+    {% endif %}
+
+    <h2>2. Current Highest Bids</h2>
+    <p><strong>Active bids:</strong> {{ context.count }} |
+      <strong>Total bid amount:</strong> UGX {{ "{:,}".format(context.total_amount) }} |
+      <strong>Highest active bid:</strong> UGX {{ "{:,}".format(context.highest_bid) }} ({{ context.highest_bidder }})
+    </p>
+    <table border="1" cellpadding="6" cellspacing="0">
+      <thead><tr><th>Item</th><th>Highest Bid (UGX)</th><th>Bidder</th></tr></thead>
+      <tbody>
+        {% for bid in context.current_leaders %}
+        <tr>
+          <td>{{ bid.item_id }} - {{ bid.item_name }}</td>
+          <td>{{ "{:,}".format(bid.amount) }}</td>
+          <td>{{ bid.bidder_name }}</td>
+        </tr>
+        {% else %}
+        <tr><td colspan="3">No bids placed yet.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+
+    <h2>3. Bid History</h2>
+    <p>Withdrawn and closed-auction bids remain in the history. You can withdraw only an active bid.</p>
+    <table border="1" cellpadding="6" cellspacing="0">
+      <thead>
+        <tr>
+          <th>Bidder ID</th>
+          <th>Bidder Name</th>
+          <th>Item ID</th>
+          <th>Item Name</th>
+          <th>Starting Price</th>
+          <th>Reserved Price</th>
+          <th>Bid Amount</th>
+          <th>Reserve Met</th>
+          <th>Date &amp; Time</th>
+          <th>Bid Status</th>
+          <th>Payment Status</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for b in context.bid_list %}
+        <tr>
+          <td>{{ b.bidders_id }}</td>
+          <td>{{ b.bidder_name }}</td>
+          <td>{{ b.item_id }}</td>
+          <td>{{ b.item_name }}</td>
+          <td>{{ "{:,}".format(b.starting_price) }}</td>
+          <td>{{ "{:,}".format(b.reserved_price) }}</td>
+          <td><strong>{{ "{:,}".format(b.amount) }}</strong></td>
+          <td>{{ 'Yes' if b.meets_reserve else 'No' }}</td>
+          <td>{{ b.date }} {{ b.time }}</td>
+          <td>{{ b.bid_status or 'Active' }}</td>
+          <td>{{ b.payment_status or 'Not applicable' }}</td>
+          <td>
+            {% if (b.bid_status or 'Active') == 'Active' and b.bid_id in context.latest_active_bid_ids %}
+            <form method="POST" action="{{ url_for('withdraw_bid', bid_id=b.bid_id) }}">
+              <button type="submit">Withdraw</button>
+            </form>
+            {% else %}
+            -
+            {% endif %}
+          </td>
+        </tr>
+        {% else %}
+        <tr><td colspan="12">No bids have been placed yet.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+
+    <h2>4. Close the Auction and View Results</h2>
+    <p>When bidding is finished, close the auction from the Winners &amp; Payments page to save item-by-item results.</p>
+    <p><a href="{{ url_for('winners_page') }}">Review standings, close an auction, or settle pending payments</a></p>
+  </body>
+</html>

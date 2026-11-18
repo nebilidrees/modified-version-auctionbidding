@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Auctions - Auction and Bidding System</title>
+  </head>
+  <body>
+    <h1>Auction and Bidding System</h1>
+    <nav>
+      <a href="{{ url_for('index_page') }}">Home</a> |
+      <a href="{{ url_for('auctions_page') }}">Auctions</a> |
+      <a href="{{ url_for('sellers_page') }}">Sellers</a> |
+      <a href="{{ url_for('items_page') }}">Auction Items</a> |
+      <a href="{{ url_for('bidders_page') }}">Bidders</a> |
+      <a href="{{ url_for('bids_page') }}">Bids</a> |
+      <a href="{{ url_for('winners_page') }}">Winners &amp; Payments</a>
+    </nav>
+    <hr />
+
+    <h2>1. Schedule an Auction</h2>
+    <p>Create an auction first. It must be started before bidders can submit bids.</p>
+    {% if status_message %}
+    <p><strong>{{ status_message }}</strong></p>
+    {% endif %}
+    <form method="POST" action="{{ url_for('add_auction') }}">
+      <fieldset>
+        <legend>Auction Event Details</legend>
+        <p>
+          <label>Auction Name:</label><br />
+          <input type="text" name="auction_name" placeholder="e.g. Kampala Motor &amp; Tech Auction" required />
+        </p>
+        <p>
+          <label>Location / Venue:</label><br />
+          <input type="text" name="location" placeholder="e.g. Kampala" required />
+        </p>
+        <p>
+          <label>Date:</label><br />
+          <input type="text" name="date" placeholder="DD-MM-YYYY" required />
+        </p>
+        <p>
+          <label>Start Time:</label><br />
+          <input type="text" name="start_time" placeholder="e.g. 10:00 AM" required />
+        </p>
+        <p>
+          <label>End Time:</label><br />
+          <input type="text" name="end_time" placeholder="e.g. 4:00 PM" required />
+        </p>
+        <button type="submit">Schedule Auction</button>
+      </fieldset>
+    </form>
+
+    <h2>2. Start or Review an Auction</h2>
+    <table border="1" cellpadding="6" cellspacing="0">
+      <thead>
+        <tr>
+          <th>Auction ID</th>
+          <th>Auction Name</th>
+          <th>Date</th>
+          <th>Start Time</th>
+          <th>End Time</th>
+          <th>Location</th>
+          <th>Status</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for auc in auctions %}
+        <tr>
+          <td>{{ auc.auction_id }}</td>
+          <td>{{ auc.auction_name }}</td>
+          <td>{{ auc.date }}</td>
+          <td>{{ auc.start_time }}</td>
+          <td>{{ auc.end_time }}</td>
+          <td>{{ auc.location }}</td>
+          <td><strong>{{ auc.status or 'Open' }}</strong></td>
+          <td>
+            {% if (auc.status or 'Open') == 'Scheduled' %}
+            <form method="POST" action="{{ url_for('start_auction', auction_id=auc.auction_id) }}">
+              <button type="submit">Start Bidding</button>
+            </form>
+            {% elif (auc.status or 'Open') == 'Open' %}
+            <a href="{{ url_for('bids_page') }}">Place / Review Bids</a>
+            {% else %}
+            <a href="{{ url_for('winners_page') }}">View Results</a>
+            {% endif %}
+          </td>
+        </tr>
+        {% else %}
+        <tr><td colspan="8">No auctions have been scheduled yet.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </body>
+</html>

@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Auction Items - Auction and Bidding System</title>
+  </head>
+  <body>
+    <h1>Auction and Bidding System</h1>
+    <nav>
+      <a href="{{ url_for('index_page') }}">Home</a> |
+      <a href="{{ url_for('auctions_page') }}">Auctions</a> |
+      <a href="{{ url_for('sellers_page') }}">Sellers</a> |
+      <a href="{{ url_for('items_page') }}">Auction Items</a> |
+      <a href="{{ url_for('bidders_page') }}">Bidders</a> |
+      <a href="{{ url_for('bids_page') }}">Bids</a> |
+      <a href="{{ url_for('winners_page') }}">Winners &amp; Payments</a>
+    </nav>
+    <hr />
+
+    <h2>1. Browse and Search Auction Items</h2>
+    <form method="GET" action="{{ url_for('items_page') }}">
+      <label for="item-search">Search by item name or ID:</label>
+      <input id="item-search" type="search" name="search" value="{{ search_query }}" />
+      <button type="submit">Search</button>
+      {% if search_query %}
+      <a href="{{ url_for('items_page') }}">Clear search</a>
+      {% endif %}
+    </form>
+
+    <h2>2. Item Catalog</h2>
+    <p>Only items marked Available in an Open auction can receive bids. Start auctions from the Auctions page.</p>
+    <table border="1" cellpadding="6" cellspacing="0">
+      <thead>
+        <tr>
+          <th>Item ID</th>
+          <th>Item Name</th>
+          <th>Category</th>
+          <th>Condition</th>
+          <th>Base Price (UGX)</th>
+          <th>Reserved Price (UGX)</th>
+          <th>Description</th>
+          <th>Status</th>
+          <th>Seller</th>
+          <th>Auction ID</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for item in items %}
+        <tr>
+          <td>{{ item.item_id }}</td>
+          <td>{{ item.item_name }}</td>
+          <td>{{ item.category }}</td>
+          <td>{{ item.condition }}</td>
+          <td>{{ "{:,}".format(item.starting_price) }}</td>
+          <td>{{ "{:,}".format(item.reserved_price) }}</td>
+          <td>{{ item.description or '-' }}</td>
+          <td><strong>{{ item.status }}</strong></td>
+          <td>{{ item.seller_id }} ({{ item.seller_name }})</td>
+          <td>{{ item.auction_id or 'Unassigned' }}</td>
+        </tr>
+        {% else %}
+        <tr><td colspan="10">No items match this search.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </body>
+</html>
