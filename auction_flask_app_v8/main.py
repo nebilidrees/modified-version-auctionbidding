@@ -3,7 +3,10 @@ import os
 import time
 from datetime import datetime
 
-from auction_models import Auction, Seller, AuctionItem, Bidder, Bid, Payment, SuccessfulWinner
+from auction_models import (
+    Auction, Seller, ItemSpecification, Bidder, Bid, Payment,
+    SuccessfulWinner,
+)
 
 # The program saves information in these files.
 payment_file = "bidder_payments.json"
@@ -83,6 +86,126 @@ def read_json(file_name, empty_value):
         return empty_value
 
 
+def make_auction(auction):
+    return Auction(
+        auction.auction_id,
+        auction.date,
+        auction.start_time,
+        auction.end_time,
+        auction.location,
+        auction.auction_name,
+    )
+
+
+def make_seller(seller_id, name, company, contact, email_address,
+               seller_status, auction):
+    return Seller(
+        seller_id, name, company, contact, email_address, seller_status,
+        auction.auction_id, auction.date, auction.start_time,
+        auction.end_time, auction.location, auction.auction_name,
+    )
+
+
+def make_bidder(name, contact, address, bidder_id, gender, birth_year, auction):
+    return Bidder(
+        name, contact, address, bidder_id, gender, birth_year,
+        auction.auction_id, auction.date, auction.start_time,
+        auction.end_time, auction.location, auction.auction_name,
+    )
+
+
+def make_item(item_id, item_name, category, condition, starting_price,
+              reserved_price, status, seller, auction):
+    specification = ItemSpecification(
+        item_id, item_name, category, condition, starting_price,
+        reserved_price, status,
+        seller.seller_id, seller.name, seller.company, seller.contact,
+        seller.email_address, seller.seller_status,
+        auction.auction_id, auction.date, auction.start_time,
+        auction.end_time, auction.location, auction.auction_name,
+    )
+    specification.item_name = item_name
+    specification.starting_price = starting_price
+    specification.seller = seller
+    specification.auction = auction
+    return specification
+
+
+def make_bid(amount, date, time, bidder, item, auction):
+    reserved_price = getattr(
+        getattr(item, "auction_item", item),
+        "_AuctionItem__reserved_price",
+        getattr(item, "reserved_price", getattr(item, "base_price", 0)),
+    )
+    return Bid(
+        amount, date, time,
+        bidder.name, bidder.contact, bidder.address, bidder.bidders_id,
+        bidder.gender, bidder.birth_year,
+        item.item_id, item.item_name, item.category, item.condition,
+        item.starting_price, reserved_price,
+        item.status,
+        item.seller.seller_id, item.seller.name, item.seller.company,
+        item.seller.contact, item.seller.email_address,
+        item.seller.seller_status,
+        auction.auction_id, auction.date, auction.start_time,
+        auction.end_time, auction.location, auction.auction_name,
+    )
+
+
+def make_successful_winner(winner_id, bidder, item, final_bid, auction):
+    return SuccessfulWinner(
+        winner_id,
+        bidder.bidders_id,
+        bidder.name,
+        item.item_id,
+        item.item_name,
+        item.category,
+        item.condition,
+        item.starting_price,
+        getattr(getattr(item, "auction_item", item),
+                "_AuctionItem__reserved_price",
+                item.starting_price),
+        item.status,
+        final_bid,
+        bidder.contact,
+        bidder.address,
+        bidder.gender,
+        bidder.birth_year,
+        getattr(item.seller, "seller_id", ""),
+        getattr(item.seller, "name", ""),
+        getattr(item.seller, "company", ""),
+        getattr(item.seller, "contact", ""),
+        getattr(item.seller, "email_address", ""),
+        getattr(item.seller, "seller_status", "Registered"),
+        auction.auction_id,
+        auction.date,
+        auction.start_time,
+        auction.end_time,
+        auction.location,
+        auction.auction_name,
+    )
+
+
+def make_payment(payment_id, bid_id, transaction_id, currency, payment_method,
+                 amount, bid_date, bid_time, bidder, item, seller, auction):
+    return Payment(
+        payment_id, bid_id, transaction_id, currency, payment_method,
+        amount, bid_date, bid_time,
+        bidder.name, bidder.contact, bidder.address, bidder.bidders_id,
+        bidder.gender, bidder.birth_year,
+        item.item_id, item.item_name, item.category, item.condition,
+        item.starting_price,
+        getattr(getattr(item, "auction_item", item),
+                "_AuctionItem__reserved_price",
+                item.starting_price),
+        item.status,
+        seller.seller_id, seller.name, seller.company, seller.contact,
+        seller.email_address, seller.seller_status,
+        auction.auction_id, auction.date, auction.start_time,
+        auction.end_time, auction.location, auction.auction_name,
+    )
+
+
 def save_bidders(bidders):
     data = []
     for bidder in bidders:
@@ -101,7 +224,7 @@ def load_bidders_from_file(auction):
         bidder_id = saved_bidder["bidders_id"]
         gender = saved_bidder.get("gender", "Not provided")
         birth_year = saved_bidder.get("birth_year", "Not provided")
-        bidder = Bidder(name, contact, address, bidder_id, gender, birth_year, auction)
+        bidder = make_bidder(name, contact, address, bidder_id, gender, birth_year, auction)
         bidders.append(bidder)
     return bidders
 
@@ -124,7 +247,7 @@ def load_sellers_from_file(auction):
     sellers = []
     saved_sellers = read_json(seller_file, [])
     for saved_seller in saved_sellers:
-        seller = Seller(
+        seller = make_seller(
             saved_seller.get("seller_id", ""),
             saved_seller.get("name", ""),
             saved_seller.get("company", ""),
@@ -174,14 +297,28 @@ def generate_item_id(saved_items):
     return f"ITM-{highest_number + 1:04}"
 
 
-def load_items_from_file(seller, auction):
+def load_items_from_file(sellers, default_seller):
     items = []
     saved_items = read_json(item_file, {})
     for item_id, details in saved_items.items():
         price = details.get("base price", 0)
         item_name = details.get("name", item_id).title()
-        item = AuctionItem(item_id, item_name, details.get("category", "General"), details.get("condition", "New"),
-                           price, price + 50000, details.get("status", "AVAILABLE"), seller, auction)
+        item_seller = next(
+            (seller for seller in sellers if seller.seller_id == details.get("seller_id")),
+            default_seller,
+        )
+        specification = make_item(
+            item_id,
+            item_name,
+            details.get("category", "General"),
+            details.get("condition", "New"),
+            price,
+            price + 50000,
+            details.get("status", "AVAILABLE"),
+            item_seller,
+            item_seller.auction,
+        )
+        item = specification
         items.append(item)
     return items
 
@@ -277,25 +414,15 @@ def display_payment_history(history, title):
 
 
 def create_bid(amount, bidder, item):
-    """Create a bid that contains its own auction item and bidder objects."""
     timestamp = datetime.now()
-    auction_item = AuctionItem(
-        item.item_id,
-        item.item_name,
-        item.category,
-        item.condition,
-        item.starting_price,
-        item._AuctionItem__reserved_price,
-        item.status,
-        item._AuctionItem__seller,
-        item.auction,
-    )
-    bid = Bid(
+    auction = getattr(item, "auction", bidder.auction)
+    bid = make_bid(
         amount,
         timestamp.strftime("%d-%m-%Y"),
         timestamp.strftime("%H:%M:%S"),
         bidder,
-        auction_item,
+        item,
+        auction,
     )
     if not bid.validate_amount():
         print("Bid amount is lower than the item's starting price!")
@@ -402,7 +529,7 @@ def register_bidder(bidders, auction):
     if birth_date is None:
         redirect_to_main_menu()
         return True
-    bidder = Bidder(name, contact, address, None, gender, birth_date, auction)
+    bidder = make_bidder(name, contact, address, None, gender, birth_date, auction)
     while True:
         payment_answer = input("Do you wish to pay UGX 30,000 for registration? (yes/no): ").strip().lower()
         if payment_answer in ["yes", "no"]:
@@ -439,8 +566,18 @@ def register_seller_items(seller, items, auction):
 
         saved_items = read_json(item_file, {})
         item_id = generate_item_id(saved_items)
-        item = AuctionItem(item_id, item_name.title(), category, condition, base_price,
-                           base_price, "AVAILABLE", seller, auction)
+        specification = make_item(
+            item_id,
+            item_name.title(),
+            category,
+            condition,
+            base_price,
+            base_price,
+            "AVAILABLE",
+            seller,
+            auction,
+        )
+        item = specification
         items.append(item)
         saved_items[item_id] = {
             "name": item.item_name,
@@ -493,7 +630,9 @@ def register_new_seller(sellers, items, auction):
             print("A seller with that email address is already registered.")
             return False
 
-    seller = Seller("", seller_name, company, contact, email_address, "Registered", auction)
+    seller = make_seller(
+        "", seller_name, company, contact, email_address, "Registered", auction
+    )
     seller_id = seller.generate_seller_id(sellers)
     sellers.append(seller)
     save_sellers(sellers)
@@ -524,12 +663,12 @@ def place_or_withdraw_bid(bidders, items, bids, auction, payment_statuses):
             if chosen.lower() == "w":
                 chosen = input("Enter item ID/name to withdraw: ").strip()
                 for bid in reversed(bids):
-                    is_bidder_bid = bid.bidder == bidder
+                    is_bidder_bid = bid.bidder.bidders_id == bidder.bidders_id
                     is_correct_item = bid.auction_item.item_id.lower() == chosen.lower()
                     is_correct_name = bid.auction_item.item_name.lower() == chosen.lower()
                     if is_bidder_bid and (is_correct_item or is_correct_name):
                         withdrawn_item = bid.auction_item
-                        bidder.withdraw_bid(bid.auction_item)
+                        bidder.withdraw_bid(bid.auction_item.item_name)
                         bids.remove(bid)
                         mark_bid_withdrawn(bid)
                         update_payment_records(bids, payment_statuses)
@@ -664,18 +803,21 @@ def close_auction(auction, items, bids, payment_statuses):
         if winner is None:
             item_result.update({"sale_status": "Unsold", "payment_status": "Not applicable"})
         else:
-            successful_winner = SuccessfulWinner("W01", winner.bidder, item, winner.amount)
+            successful_winner = make_successful_winner(
+                "W01", winner.bidder, item, winner.amount, auction
+            )
             successful_winner.display_winner_details()
-            if not successful_winner.make_payment(30000):
-                item_result.update({"sale_status": "Payment not allowed", "payment_status": "Not applicable"})
-                result["items"].append(item_result)
-                continue
+            successful_winner.make_payment()
             while True:
                 payment_choice = input(f"Pay for {item.item_name} now or skip it? (pay/skip): ").strip().lower()
                 if payment_choice == "pay":
                     currency = get_currency()
                     payment_method = get_payment_method()
-                    Payment("PAY01", winner.amount, winner, "TXN12345", currency, payment_method).process_payment()
+                    make_payment(
+                        "PAY01", None, "TXN12345", currency, payment_method,
+                        winner.amount, winner.date, winner.time,
+                        winner.bidder, item, item.seller, auction,
+                    ).process_payment()
                     payment_statuses[item.item_id] = "Completed"
                     break
                 if payment_choice == "skip":
@@ -773,7 +915,20 @@ def complete_pending_payment(bidders, records, payment_statuses):
     currency = get_currency()
     payment_method = get_payment_method()
     clear_screen()
-    Payment("PAY01", item["final_bid"], None, "TXN12345", currency, payment_method).process_payment()
+    auction = create_auction(selected[0]["auction_id"])
+    seller = make_seller(
+        "SEL-0001", "Auction Seller", "Auction", "N/A",
+        "seller@auction.local", "Registered", auction,
+    )
+    item_object = make_item(
+        item["item_id"], item["item_name"], "General", "New",
+        item["starting_price"], item["final_bid"], "Sold", seller, auction,
+    )
+    make_payment(
+        "PAY01", None, "TXN12345", currency, payment_method,
+        item["final_bid"], "01-01-2026", "00:00", bidder,
+        item_object, seller, auction,
+    ).process_payment()
     item["payment_status"] = "Completed"
     payment_statuses[item["item_id"]] = "Completed"
     save_json(auction_results_file, results)
@@ -791,9 +946,12 @@ def complete_pending_payment(bidders, records, payment_statuses):
 
 def run_auction_program():
     auction = create_auction(next_auction_id())
-    seller = Seller("S01", "Mark", "GadgetHub", "0771234567", "mark@gadgethub.com", "Verified", auction)
-    items = load_items_from_file(seller, auction)
     sellers = load_sellers_from_file(auction)
+    seller = make_seller(
+        "S01", "Mark", "GadgetHub", "0771234567",
+        "mark@gadgethub.com", "Verified", auction,
+    )
+    items = load_items_from_file(sellers, seller)
     bidders = load_bidders_from_file(auction)
     bids = []
     records = read_json(payment_file, {})
@@ -849,11 +1007,11 @@ def run_auction_program():
                 for bidder in bidders:
                     bidder.Auction = auction
                 for item in items:
-                    item.auction = auction
+                    item.Seller.Auction = auction
                 bids.clear()
                 payment_statuses.clear()
             auction_running = True
-            auction.start_auction()
+            seller.start_auction()
         elif choice == "6":
             if auction_running:
                 place_or_withdraw_bid(bidders, items, bids, auction, payment_statuses)
@@ -899,4 +1057,5 @@ def run_auction_program():
 
 
 
-run_auction_program()
+if __name__ == "__main__":
+    run_auction_program()

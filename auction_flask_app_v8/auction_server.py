@@ -3,7 +3,9 @@ import json
 import random
 from datetime import datetime
 from pathlib import Path
-from auction_models import Auction, Seller, AuctionItem, Bidder, Bid, Payment
+from auction_models import (
+    Auction, Seller, ItemSpecification, Bidder, Bid, Payment,
+)
 
 auction_manager = Flask(__name__)
 
@@ -92,6 +94,152 @@ def save_data(data):
         json.dump(data, doc, indent=4)
 
 
+def make_auction(auction_data):
+    return Auction(
+        auction_data["auction_id"],
+        auction_data["date"],
+        auction_data["start_time"],
+        auction_data["end_time"],
+        auction_data["location"],
+        auction_data["auction_name"],
+    )
+
+
+def make_seller(seller_data, auction_data):
+    return Seller(
+        seller_data.get("seller_id", ""),
+        seller_data.get("name", ""),
+        seller_data.get("company", ""),
+        seller_data.get("contact", ""),
+        seller_data.get("email_address", ""),
+        seller_data.get("seller_status", "Registered"),
+        auction_data["auction_id"],
+        auction_data["date"],
+        auction_data["start_time"],
+        auction_data["end_time"],
+        auction_data["location"],
+        auction_data["auction_name"],
+    )
+
+
+def make_bidder(bidder_data, auction_data):
+    return Bidder(
+        bidder_data.get("name", ""),
+        bidder_data.get("contact", ""),
+        bidder_data.get("address", ""),
+        bidder_data.get("bidders_id", ""),
+        bidder_data.get("gender", ""),
+        bidder_data.get("birth_year", ""),
+        auction_data["auction_id"],
+        auction_data["date"],
+        auction_data["start_time"],
+        auction_data["end_time"],
+        auction_data["location"],
+        auction_data["auction_name"],
+    )
+
+
+def make_item(item_data, seller_data, auction_data):
+    specification = ItemSpecification(
+        item_data.get("item_id", ""),
+        item_data.get("item_name", ""),
+        item_data.get("category", "General"),
+        item_data.get("condition", "New"),
+        int(item_data.get("starting_price", 0)),
+        int(item_data.get("reserved_price", 0)),
+        item_data.get("status", "Available"),
+        seller_data.get("seller_id", ""),
+        seller_data.get("name", ""),
+        seller_data.get("company", ""),
+        seller_data.get("contact", ""),
+        seller_data.get("email_address", ""),
+        seller_data.get("seller_status", "Registered"),
+        auction_data["auction_id"],
+        auction_data["date"],
+        auction_data["start_time"],
+        auction_data["end_time"],
+        auction_data["location"],
+        auction_data["auction_name"],
+    )
+    specification.item_name = item_data.get("item_name", "")
+    specification.starting_price = int(item_data.get("starting_price", 0))
+    specification.seller = make_seller(seller_data, auction_data)
+    specification.auction = make_auction(auction_data)
+    return specification
+
+
+def make_bid(bid_data, bidder_data, item_data, seller_data, auction_data):
+    return Bid(
+        bid_data["amount"],
+        bid_data.get("date", ""),
+        bid_data.get("time", ""),
+        bidder_data.get("name", ""),
+        bidder_data.get("contact", ""),
+        bidder_data.get("address", ""),
+        bidder_data.get("bidders_id", ""),
+        bidder_data.get("gender", ""),
+        bidder_data.get("birth_year", ""),
+        item_data["item_id"],
+        item_data["item_name"],
+        item_data.get("category", "General"),
+        item_data.get("condition", "New"),
+        int(item_data.get("starting_price", 0)),
+        int(item_data.get("reserved_price", 0)),
+        item_data.get("status", "Available"),
+        seller_data.get("seller_id", ""),
+        seller_data.get("name", ""),
+        seller_data.get("company", ""),
+        seller_data.get("contact", ""),
+        seller_data.get("email_address", ""),
+        seller_data.get("seller_status", "Registered"),
+        auction_data["auction_id"],
+        auction_data["date"],
+        auction_data["start_time"],
+        auction_data["end_time"],
+        auction_data["location"],
+        auction_data["auction_name"],
+    )
+
+
+def make_payment(payment_id, bid_id, transaction_id, currency, payment_method,
+                 bid_data, bidder_data, item_data, seller_data, auction_data):
+    return Payment(
+        payment_id,
+        bid_id,
+        transaction_id,
+        currency,
+        payment_method,
+        bid_data["amount"],
+        bid_data.get("date", ""),
+        bid_data.get("time", ""),
+        bidder_data.get("name", ""),
+        bidder_data.get("contact", ""),
+        bidder_data.get("address", ""),
+        bidder_data.get("bidders_id", ""),
+        bidder_data.get("gender", ""),
+        bidder_data.get("birth_year", ""),
+        item_data["item_id"],
+        item_data["item_name"],
+        item_data.get("category", "General"),
+        item_data.get("condition", "New"),
+        int(item_data.get("starting_price", 0)),
+        int(item_data.get("reserved_price", 0)),
+        item_data.get("status", "Available"),
+        seller_data.get("seller_id", ""),
+        seller_data.get("name", ""),
+        seller_data.get("company", ""),
+        seller_data.get("contact", ""),
+        seller_data.get("email_address", ""),
+        seller_data.get("seller_status", "Registered"),
+        auction_data["auction_id"],
+        auction_data["date"],
+        auction_data["start_time"],
+        auction_data["end_time"],
+        auction_data["location"],
+        auction_data["auction_name"],
+    )
+
+
 def next_auto_id(prefix, existing_ids, digits=3):
     highest = 0
     for item_id in existing_ids:
@@ -137,61 +285,44 @@ def auction_is_open(data, auction_id):
 
 
 def rebuild_bid_objects(data):
-    auction_lookup = {
-        a["auction_id"]: Auction(
-            a["auction_id"], a["date"], a["start_time"], a["end_time"], a["location"], a["auction_name"]
-        )
-        for a in data["auctions"]
-    }
-    seller_lookup = {
-        s["seller_id"]: Seller(
-            s["seller_id"],
-            s["name"],
-            s["company"],
-            s["contact"],
-            s["email_address"],
-            s["seller_status"],
-            auction_lookup.get(s.get("auction_id")),
-        )
-        for s in data["sellers"]
-    }
-
     bid_objects = []
     for b in active_bids(data):
-        bid = Bid(b["amount"], b["item_name"], b["bidder_name"])
-        auc = auction_lookup.get(b.get("auction_id"))
-        sel = seller_lookup.get(b.get("seller_id"))
-
-        bid.add_bid_item(
-            item_id=b["item_id"],
-            category=b["category"],
-            condition=b["condition"],
-            starting_price=b["starting_price"],
-            reserved_price=b["reserved_price"],
-            status=b["status"],
-            seller=sel,
-            auction=auc,
+        auction_data = next(
+            (a for a in data["auctions"] if a["auction_id"] == b.get("auction_id")),
+            {},
         )
-        bid.add_bidder(
-            contact=b.get("contact", ""),
-            address=b.get("address", ""),
-            bidders_id=b.get("bidders_id", ""),
-            gender=b.get("gender", ""),
-            birth_year=b.get("birth_year"),
-            auction=auc,
+        seller_data = next(
+            (s for s in data["sellers"] if s["seller_id"] == b.get("seller_id")),
+            {},
         )
-        if b.get("date"):
-            bid.date = b["date"]
-        if b.get("time"):
-            bid.time = b["time"]
-        bid_objects.append(bid)
+        bidder_data = next(
+            (bidder for bidder in data["bidders"] if bidder["bidders_id"] == b.get("bidders_id")),
+            {
+                "name": b.get("bidder_name", ""),
+                "contact": b.get("contact", ""),
+                "address": b.get("address", ""),
+                "bidders_id": b.get("bidders_id", ""),
+                "gender": b.get("gender", ""),
+                "birth_year": b.get("birth_year", ""),
+            },
+        )
+        item_data = next(
+            (item for item in data["items"] if item["item_id"] == b.get("item_id")),
+            b,
+        )
+        bid_objects.append(
+            make_bid(b, bidder_data, item_data, seller_data, auction_data)
+            if auction_data
+            else None
+        )
+    bid_objects = [bid for bid in bid_objects if bid is not None]
 
     return bid_objects
 
 
 def build_summary_context(data):
     bid_objects = rebuild_bid_objects(data)
-    highest_bid = Auction.find_highest_bid(bid_objects)
+    highest_bid = Auction.find_highest_bid(None, bid_objects)
     return {
         "auction_count": len(data["auctions"]),
         "seller_count": len(data["sellers"]),
@@ -411,32 +542,18 @@ def add_seller():
         return redirect(url_for("sellers_page", message="A seller with that email address is already registered."))
 
     existing_sellers = [
-        Seller(s["seller_id"], s["name"], s["company"], s["contact"], s["email_address"], s["seller_status"], None)
+        make_seller(s, matched_auc_dict)
         for s in data["sellers"]
     ]
-
-    matched_auc = (
-        Auction(
-            matched_auc_dict["auction_id"],
-            matched_auc_dict["date"],
-            matched_auc_dict["start_time"],
-            matched_auc_dict["end_time"],
-            matched_auc_dict["location"],
-            matched_auc_dict["auction_name"],
-        )
-        if matched_auc_dict
-        else None
-    )
-
-    seller = Seller(
-        seller_id="",
-        name=request.form["name"].strip(),
-        company=request.form["company"].strip(),
-        contact=request.form["contact"].strip(),
-        email_address=email_address,
-        seller_status="Not Registered",
-        Auction=matched_auc,
-    )
+    matched_auc = make_auction(matched_auc_dict)
+    seller = make_seller({
+        "seller_id": "",
+        "name": request.form["name"].strip(),
+        "company": request.form["company"].strip(),
+        "contact": request.form["contact"].strip(),
+        "email_address": email_address,
+        "seller_status": "Not Registered",
+    }, matched_auc_dict)
     seller.generate_seller_id(existing_sellers)
     seller.seller_status = "Registered"
 
@@ -480,17 +597,22 @@ def add_seller():
             return redirect(url_for("sellers_page", message="Each reserve price must be at least its positive starting price."))
         description = descriptions[idx].strip() if idx < len(descriptions) else ""
 
-        item_obj = AuctionItem(
-            item_id=auto_item_id,
-            item_name=clean_name,
-            category=category,
-            condition=condition,
-            starting_price=starting_price,
-            reserved_price=reserved_price,
-            status="Available",
-            seller=seller,
-            auction=matched_auc,
-        )
+        item_obj = make_item({
+            "item_id": auto_item_id,
+            "item_name": clean_name,
+            "category": category,
+            "condition": condition,
+            "starting_price": starting_price,
+            "reserved_price": reserved_price,
+            "status": "Available",
+        }, {
+            "seller_id": seller.seller_id,
+            "name": seller.name,
+            "company": seller.company,
+            "contact": seller.contact,
+            "email_address": seller.email_address,
+            "seller_status": seller.seller_status,
+        }, matched_auc_dict)
         seller.set_starting_price(item_obj, starting_price)
         seller.reserve_price(item_obj, reserved_price)
         if description:
@@ -527,31 +649,8 @@ def add_seller_item():
     if matched_sel_dict.get("auction_id") != auction_id:
         return redirect(url_for("items_page", message="Choose the auction assigned to this seller."))
 
-    matched_auc = (
-        Auction(
-            matched_auc_dict["auction_id"],
-            matched_auc_dict["date"],
-            matched_auc_dict["start_time"],
-            matched_auc_dict["end_time"],
-            matched_auc_dict["location"],
-            matched_auc_dict["auction_name"],
-        )
-        if matched_auc_dict
-        else None
-    )
-    matched_sel = (
-        Seller(
-            matched_sel_dict["seller_id"],
-            matched_sel_dict["name"],
-            matched_sel_dict["company"],
-            matched_sel_dict["contact"],
-            matched_sel_dict["email_address"],
-            matched_sel_dict["seller_status"],
-            matched_auc,
-        )
-        if matched_sel_dict
-        else None
-    )
+    matched_auc = make_auction(matched_auc_dict)
+    matched_sel = make_seller(matched_sel_dict, matched_auc_dict)
 
     auto_item_id = next_auto_id(
         "ITM",
@@ -572,17 +671,15 @@ def add_seller_item():
         return redirect(url_for("items_page", message="The reserve price must be at least the positive starting price."))
     description = request.form.get("description", "").strip()
 
-    item_obj = AuctionItem(
-        item_id=auto_item_id,
-        item_name=item_name,
-        category=category,
-        condition=condition,
-        starting_price=starting_price,
-        reserved_price=reserved_price,
-        status="Available",
-        seller=matched_sel,
-        auction=matched_auc,
-    )
+    item_obj = make_item({
+        "item_id": auto_item_id,
+        "item_name": item_name,
+        "category": category,
+        "condition": condition,
+        "starting_price": starting_price,
+        "reserved_price": reserved_price,
+        "status": "Available",
+    }, matched_sel_dict, matched_auc_dict)
     if matched_sel:
         matched_sel.set_starting_price(item_obj, starting_price)
         matched_sel.reserve_price(item_obj, reserved_price)
@@ -674,10 +771,31 @@ def add_bidder():
         )
 
     existing_bidders = [
-        Bidder(reg["name"], bidders_id=reg.get("bidders_id", ""))
+        make_bidder(reg, next((a for a in data["auctions"] if a["auction_id"] == reg.get("auction_id")), {
+            "auction_id": reg.get("auction_id", ""),
+            "date": "",
+            "start_time": "",
+            "end_time": "",
+            "location": "",
+            "auction_name": "",
+        }))
         for reg in data["bidders"]
     ] + [
-        Bidder(b["bidder_name"], bidders_id=b.get("bidders_id", ""))
+        make_bidder({
+            "name": b["bidder_name"],
+            "bidders_id": b.get("bidders_id", ""),
+            "contact": b.get("contact", ""),
+            "address": b.get("address", ""),
+            "gender": b.get("gender", ""),
+            "birth_year": b.get("birth_year", ""),
+        }, next((a for a in data["auctions"] if a["auction_id"] == b.get("auction_id")), {
+            "auction_id": b.get("auction_id", ""),
+            "date": "",
+            "start_time": "",
+            "end_time": "",
+            "location": "",
+            "auction_name": "",
+        }))
         for b in data["bids"]
     ]
 
@@ -685,18 +803,7 @@ def add_bidder():
     matched_auc_dict = next((a for a in data["auctions"] if a["auction_id"] == auction_id), None)
     if not matched_auc_dict or matched_auc_dict.get("status", "Open") == "Closed":
         return redirect(url_for("bidders_page", error="Choose an auction that has not been closed."))
-    matched_auc = (
-        Auction(
-            matched_auc_dict["auction_id"],
-            matched_auc_dict["date"],
-            matched_auc_dict["start_time"],
-            matched_auc_dict["end_time"],
-            matched_auc_dict["location"],
-            matched_auc_dict["auction_name"],
-        )
-        if matched_auc_dict
-        else None
-    )
+    matched_auc = make_auction(matched_auc_dict)
 
     birth_date = request.form.get("birth_date", "").strip()
     try:
@@ -704,15 +811,14 @@ def add_bidder():
     except ValueError:
         return redirect(url_for("bidders_page", error="Enter a valid birth date in DD-MM-YYYY format."))
 
-    bidder = Bidder(
-        name=request.form["name"].strip(),
-        contact=request.form["contact"].strip(),
-        address=request.form["address"].strip(),
-        bidders_id="",
-        gender=request.form.get("gender", "").strip(),
-        birth_year=birth_date,
-        Auction=matched_auc,
-    )
+    bidder = make_bidder({
+        "name": request.form["name"].strip(),
+        "contact": request.form["contact"].strip(),
+        "address": request.form["address"].strip(),
+        "bidders_id": "",
+        "gender": request.form.get("gender", "").strip(),
+        "birth_year": birth_date,
+    }, matched_auc_dict)
     bidder.generate_bidder_id(existing_bidders)
     bidder.make_payment(PARTICIPATION_FEE)
     bidder.register()
@@ -737,7 +843,7 @@ def add_bidder():
 def bids_page():
     data = load_data()
     bid_objects = rebuild_bid_objects(data)
-    highest_bid = Auction.find_highest_bid(bid_objects)
+    highest_bid = Auction.find_highest_bid(None, bid_objects)
     available_items = [
         i for i in data["items"]
         if i.get("status", "Available") == "Available" and auction_is_open(data, i.get("auction_id"))
@@ -811,58 +917,48 @@ def add_bid():
     assigned_bidder_id = reg_bidder["bidders_id"]
 
     matched_auc_dict = next((a for a in data["auctions"] if a["auction_id"] == auction_id), None)
-    matched_auc = (
-        Auction(
-            matched_auc_dict["auction_id"],
-            matched_auc_dict["date"],
-            matched_auc_dict["start_time"],
-            matched_auc_dict["end_time"],
-            matched_auc_dict["location"],
-            matched_auc_dict["auction_name"],
-        )
-        if matched_auc_dict
-        else None
-    )
+    matched_auc = make_auction(matched_auc_dict)
+    matched_sel_dict = next((s for s in data["sellers"] if s["seller_id"] == seller_id), {})
+    matched_sel = make_seller(matched_sel_dict, matched_auc_dict)
 
-    matched_sel_dict = next((s for s in data["sellers"] if s["seller_id"] == seller_id), None)
-    matched_sel = (
-        Seller(
-            matched_sel_dict["seller_id"],
-            matched_sel_dict["name"],
-            matched_sel_dict["company"],
-            matched_sel_dict["contact"],
-            matched_sel_dict["email_address"],
-            matched_sel_dict["seller_status"],
-            matched_auc,
-        )
-        if matched_sel_dict
-        else None
-    )
-
-    # Composition: Bid creates and owns its AuctionItem and Bidder objects
-    bid = Bid(amount, item_name, bidder_name)
-    created_item = bid.add_bid_item(
-        item_id=item_id,
-        category=category,
-        condition=condition,
-        starting_price=starting_price,
-        reserved_price=reserved_price,
-        status="Available",
-        seller=matched_sel,
-        auction=matched_auc,
-    )
-
-    if created_item is None:
-        return redirect(url_for(redirect_target))
-
-    created_bidder = bid.add_bidder(
-        contact=contact,
-        address=address,
-        bidders_id=assigned_bidder_id,
-        gender=gender,
-        birth_year=birth_year,
-        auction=matched_auc,
-    )
+    created_item = make_item({
+        "item_id": item_id,
+        "item_name": item_name,
+        "category": category,
+        "condition": condition,
+        "starting_price": starting_price,
+        "reserved_price": reserved_price,
+        "status": "Available",
+    }, matched_sel_dict, matched_auc_dict)
+    created_bidder = make_bidder({
+        "name": bidder_name,
+        "contact": contact,
+        "address": address,
+        "bidders_id": assigned_bidder_id,
+        "gender": gender,
+        "birth_year": birth_year,
+    }, matched_auc_dict)
+    timestamp = datetime.now()
+    bid = make_bid({
+        "amount": amount,
+        "date": timestamp.strftime("%d-%m-%Y"),
+        "time": timestamp.strftime("%H:%M:%S"),
+    }, {
+        "name": created_bidder.name,
+        "contact": created_bidder.contact,
+        "address": created_bidder.address,
+        "bidders_id": created_bidder.bidders_id,
+        "gender": created_bidder.gender,
+        "birth_year": created_bidder.birth_year,
+    }, {
+        "item_id": created_item.item_id,
+        "item_name": created_item.item_name,
+        "category": created_item.category,
+        "condition": created_item.condition,
+        "starting_price": created_item.starting_price,
+        "reserved_price": reserved_price,
+        "status": created_item.status,
+    }, matched_sel_dict, matched_auc_dict)
     created_bidder.register()
     bid.show_bid_details()
 
@@ -1006,16 +1102,42 @@ def add_payment():
     currency = request.form["currency"].strip()
     payment_method = request.form["payment_method"].strip()
 
-    bid_objects = rebuild_bid_objects(data)
-    matched_bid = next((b for b in bid_objects if b.item_name == item_name), None)
-
-    payment = Payment(
-        payment_id=auto_payment_id,
-        amount=amount,
-        bid=matched_bid,
-        transaction_id=auto_transaction_id,
-        currency=currency,
-        payment_method=payment_method,
+    matched_bid_data = next(
+        (bid for bid in data["bids"] if bid.get("item_id") == matched_winner["item_id"]),
+        {},
+    )
+    auction_data = next(
+        (auction for auction in data["auctions"] if auction["auction_id"] == matched_winner["auction_id"]),
+        {},
+    )
+    item_data = next(
+        (item for item in data["items"] if item["item_id"] == matched_winner["item_id"]),
+        {"item_id": matched_winner["item_id"], "item_name": item_name, "starting_price": amount,
+         "reserved_price": amount, "status": "Sold"},
+    )
+    seller_data = next(
+        (seller for seller in data["sellers"] if seller["seller_id"] == item_data.get("seller_id")),
+        {},
+    )
+    bidder_data = {
+        "name": winner_name,
+        "contact": matched_winner.get("contact", ""),
+        "address": "",
+        "bidders_id": matched_winner["bidders_id"],
+        "gender": "",
+        "birth_year": "",
+    }
+    payment = make_payment(
+        auto_payment_id,
+        matched_bid_data.get("bid_id", ""),
+        auto_transaction_id,
+        currency,
+        payment_method,
+        {"amount": amount, "date": matched_bid_data.get("date", ""), "time": matched_bid_data.get("time", "")},
+        bidder_data,
+        item_data,
+        seller_data,
+        auction_data,
     )
     payment.process_payment()
 
@@ -1042,7 +1164,7 @@ def add_payment():
         "item_name": item_name,
         "winning_bid": winning_bid_amount,
         "added_fee": 0,
-        "amount": payment.amount,
+        "amount": amount,
         "transaction_id": payment.transaction_id,
         "currency": payment.currency,
         "payment_method": payment.payment_method,
